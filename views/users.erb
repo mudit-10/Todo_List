@@ -1,0 +1,117 @@
+<h1 align="center"> Welcome to the Todo List App </h1>
+<br>
+<br>
+<form action="/add_task" method="POST">
+<input type="text" name="task" /> <br><br>
+<input type="submit" value="ADD TASK" />
+</form>
+
+<ul>
+
+<% tasks.each do |task_obj| %>
+
+	<br> <br> 
+
+	<% if task_obj.completed %>
+		<% if task_obj.important && task_obj.urgent %>
+			<li class="siu">
+		<% elsif task_obj.important %>
+			<li class="simp">
+		<% elsif task_obj.urgent %>
+			<li class="surg">
+		<%else%>
+			<li class="sniu">
+		<%end%>
+	<%else%>
+		<% if task_obj.important && task_obj.urgent %>
+			<li class="iu">
+		<% elsif task_obj.important %>
+			<li class="imp">
+		<% elsif task_obj.urgent %>
+			<li class="urg">
+		<%else%>
+			<li class="niu">
+		<%end%>
+	<%end%>
+
+	<%=task_obj.task_name%>
+
+	<br>
+
+	<form style="display:inline" action="/toggle_task" method="POST">
+	<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+	<input type="submit" value="Toggle Task">
+
+	</form>
+
+	<form style="display:inline" action="/toggle_important" method="POST">
+		<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+		<%if task_obj.important%> 
+			<input type="submit" value="Mark Unimportant">
+		<%elsif !task_obj.important%>
+			<input type="submit" value="Mark Important">
+		<%end%>
+	</form>
+
+	<form style="display:inline" action="/toggle_urgent" method="POST">
+
+	<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+		<%if task_obj.urgent%> 
+			<input type="submit" value="Mark Not Urgent">
+		<%elsif !task_obj.urgent%>
+			<input type="submit" value="Mark Urgent">
+		<%end%>
+
+	</form>
+
+	<form style="display:inline" action="/remove" method="POST">
+
+	<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+	<input type="submit" value="Remove Task">
+
+	</form>
+
+	</li>
+
+<%end%>
+
+</ul>
+
+<style>
+	.imp{
+		color: rgba(255,0,0, 0.5);
+		font-size: 40px;
+		}
+	.urg{
+		color: rgba(0,255,0, 0.5);
+		font-size: 40px;
+		}
+	.iu{
+		color: rgba(0,0,255,0.5);
+		font-size: 50px;
+		}
+	.niu{	
+		color: rgba(0,0,0, 0.5);
+		font-size: 20px;
+		}
+	.simp{
+		text-decoration: line-through;
+		color: rgba(255,0,0, 0.5);
+		font-size: 40px;
+		}
+	.surg{
+		text-decoration: line-through;
+		color: rgba(0,255,0, 0.5);
+		font-size: 40px;
+		}
+	.siu{
+		text-decoration: line-through;
+		color: rgba(0,0,255,0.5);
+		font-size: 50px;
+		}
+	.sniu{
+		text-decoration: line-through;	
+		color: rgba(0,0,0, 0.5);
+		font-size: 20px;
+		}
+</style>
