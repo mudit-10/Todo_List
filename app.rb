@@ -1,114 +1,143 @@
 require 'sinatra'
 require 'data_mapper'
 
-#set :bind, '0,0,0,0'
-set :port, '3000'
+DataMapper.setup(:default, "sqlite:///#{Dir.pwd}/project.db")
 
-DataMapper.setup(:default, "sqlite:///#{Dir.pwd}/app.db")
+set :sessions, true
+#set :bind, '0.0.0.0'
+
+class User
+	include DataMapper::Resource
+	property :id, Serial
+	property :email, String
+	property :password, String
+end
 
 class AllTasks
-	# attr_reader :task_name,:completed,:task_id,:urgent,:important
-	
 	include DataMapper::Resource
 	property :task_id, Serial
 	property :task_name, String
 	property :completed, Boolean
-	property :urgent, Boolean
 	property :important, Boolean
-
-
-	# def initialize(task,unique_id)
-	# 	@task_name=task
-	# 	@task_id=unique_id
-	# 	@completed=false
-	# 	@urgent=false
-	# 	@important=false
-	# end 
-
-	# def toggle_task
-	# 	@completed=!@completed
-	# end
-
-	# def toggle_urgent
-	# 	@urgent=!@urgent
-	# end
-
-	# def toggle_important
-	# 	@important=!@important
-	# end
+	property :urgent, Boolean
+	property :user_id, Integer
 end
 
 DataMapper.finalize
-DataMapper.auto_upgrade!
+User.auto_upgrade!
+AllTasks.auto_upgrade!
 
-# tasks_array=[]
-# unique_id=0
-
-get '/' do
-	tasks=AllTasks.all
-	erb :users, locals: {:tasks =>tasks}
+get '/test' do
+	"It Works"
 end
 
-post '/add_task' do
-	# # unique_id+=1
-	# task_obj=AllTasks.new(params[:task],unique_id)  #Obtaining task from erb file
-	# tasks_array<<task_obj
-	task_obj=AllTasks.new
-	task_obj.task_name = params[:task]
-	task_obj.completed = false
-	task_obj.important = false
-	task_obj.urgent = false
-	task_obj.save
+#Login, logout
+
+get '/' do
+	user = nil
+	
+	if session[:user_id] 
+		user = User.get(session[:user_id])
+		# if user!=nil
+		# else
+		# 	puts "user is empty ********************"
+		# end
+	else
+		redirect '/signin'
+	end
+	tasks = AllTasks.all(:user_id => user.id)
+	erb :index, locals: {user: user, tasks: tasks}
+end
+
+get '/signup' do
+	erb :signup
+end
+
+
+post '/register' do 
+	email = params[:email]
+	password = params[:password]
+
+	user = User.all(:email => email).first
+
+	if user
+		redirect '/signup'
+	else
+		user = User.new
+		user.email = email
+		user.password = password
+		user.save
+		session[:user_id] = user.id
+		redirect '/'
+	end
+
+end
+
+
+post '/logout' do
+	session[:user_id] = nil
 	redirect '/'
 end
 
-post '/toggle_task' do
-	# task_object=nil
-	# task_id=params[:task_id]
-	# tasks_array.each do |task_obj|
-	# 	if task_obj.task_id==task_id.to_i
-	# 		task_object=task_obj 
-	# 	end
-	# end
-	# if task_object
-	# 	task_object.toggle_task
-	# end
-	task_id=params[:task_id].to_i
-	task_obj=AllTasks.get(task_id)
-	task_obj.completed=!task_obj.completed
-	task_obj.save
+
+get '/signin' do
+	erb :signin
+end
+
+post '/signin' do
+
+	email = params[:email]
+	password = params[:password]
+
+	user = User.all(:email => email).first
+
+	if user
+		if user.password == password
+			session[:user_id] = user.id
+			redirect '/'
+		else
+			redirect '/signin'
+		end
+
+	else
+		redirect '/signup'
+	end
+	redirect '/'
+end
+
+#Tasks
+
+post '/add_task' do
+	task_name = params[:task_name]
+	task = AllTasks.new
+	task.task_name = task_name
+	task.user_id = session[:user_id]       
+	task.completed = false
+	task.save
+	redirect '/'
+end
+
+post '/toggle_task' do 
+	task_id = params[:task_id]
+	task_obj = AllTasks.get(task_id)
+	if task_obj.user_id == session[:user_id]  # So that a user doesn't modify someone else's tasks
+		task_obj.completed = !task_obj.completed
+		task_obj.save
+	end
 	redirect '/'
 end
 
 post '/toggle_important' do
-	# task_object=nil
-	# task_id=params[:task_id]
-	# tasks_array.each do |task_obj|
-	# 	if task_obj.task_id==task_id.to_i
-	# 		task_object=task_obj 
-	# 	end
-	# end
-	# if task_object
-	# 	task_object.toggle_important
-	# end
-	task_id=params[:task_id].to_i
-	task_obj=AllTasks.get(task_id)
-	task_obj.important=!task_obj.important
-	task_obj.save
+	task_id = params[:task_id]
+	task_obj = AllTasks.get(task_id)
+	if task_obj.user_id == session[:user_id]  # So that a user doesn't modify someone else's tasks
+		task_obj.important = !task_obj.important
+		task_obj.save
+	end
 	redirect '/'
 end
 
 post '/toggle_urgent' do
-	# task_object=nil
-	# task_id=params[:task_id]
-	# tasks_array.each do |task_obj|
-	# 	if task_obj.task_id==task_id.to_i
-	# 		task_object=task_obj 
-	# 	end
-	# end
-	# if task_object
-	# 	task_object.toggle_urgent
-	# end
 	task_id=params[:task_id].to_i
 	task_obj=AllTasks.get(task_id)
 	task_obj.urgent=!task_obj.urgent
@@ -117,20 +146,8 @@ post '/toggle_urgent' do
 end
 
 post '/remove' do
-	# unique_id+=1
-	# task_object=nil
-	# task_id=params[:task_id]
-	# tasks_array.each do |task_obj|
-	# 	if task_obj.task_id==task_id.to_i
-	# 		task_object=task_obj 
-	# 	end
-	# end
-	# if task_object
-	# 	tasks_array.delete(task_object)
-	# end
 	task_id=params[:task_id].to_i
 	task_obj=AllTasks.get(task_id)
 	task_obj.destroy
-	# task_obj.save
 	redirect '/'
 end

@@ -1,0 +1,130 @@
+<% if user %>
+
+	<h1>Welcome <%= user.email %></h1>
+	<form action="/logout" method="POST">
+	<input type="submit" name="submit" value="Logout">
+	</form>
+
+	<br>
+
+	<h2> Pending tasks at current time <%= Time.now %> </h2>
+	<form action="/add_task" method="POST">
+	<input type="text" name="task_name" /> <br>
+	<input type="submit" value="Add Task" />
+	</form>
+
+	<ul>
+
+	<% if tasks %>
+		<% tasks.each do |task_obj| %>
+
+		<br> <br> 
+
+		<% if task_obj.completed %>
+			<% if task_obj.important && task_obj.urgent %>
+				<li class="siu">
+			<% elsif task_obj.important %>
+				<li class="simp">
+			<% elsif task_obj.urgent %>
+				<li class="surg">
+			<%else%>
+				<li class="sniu">
+			<%end%>
+		<%else%>
+			<% if task_obj.important && task_obj.urgent %>
+				<li class="iu">
+			<% elsif task_obj.important %>
+				<li class="imp">
+			<% elsif task_obj.urgent %>
+				<li class="urg">
+			<%else%>
+				<li class="niu">
+			<%end%>
+		<%end%>
+
+		<%=task_obj.task_name%>
+
+		<br>
+
+		<form style="display:inline" action="/toggle_task" method="POST">
+		<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+		<input type="submit" value="Toggle Task">
+
+		</form>
+
+		<form style="display:inline" action="/toggle_important" method="POST">
+			<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+			<%if task_obj.important%> 
+				<input type="submit" value="Mark Unimportant">
+			<%elsif !task_obj.important%>
+				<input type="submit" value="Mark Important">
+			<%end%>
+		</form>
+
+		<form style="display:inline" action="/toggle_urgent" method="POST">
+
+		<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+			<%if task_obj.urgent%> 
+				<input type="submit" value="Mark Not Urgent">
+			<%elsif !task_obj.urgent%>
+				<input type="submit" value="Mark Urgent">
+			<%end%>
+
+		</form>
+
+		<form style="display:inline" action="/remove" method="POST">
+
+		<input type="hidden" name="task_id" value="<%= task_obj.task_id %>"/>
+		<input type="submit" value="Remove Task">
+
+		</form>
+
+		</li>
+
+		<%end%>
+	<%end%>
+
+	</ul>
+
+	<style>
+		.imp{
+			color: rgba(255,0,0,0.5);
+			font-size: 25px;
+			}
+		.urg{
+			color: rgba(0,255,0, 0.5);
+			font-size: 25px;
+			}
+		.iu{
+			color: rgba(0,0,255,1);
+			font-size: 30px;
+			}
+		.niu{	
+			color: rgba(0,0,0,0.5);
+			font-size: 20px;
+			}
+		.simp{
+			text-decoration: line-through;
+			color: rgba(255,0,0, 0.5);
+			font-size: 25px;
+			}
+		.surg{
+			text-decoration: line-through;
+			color: rgba(0,255,0, 0.5);
+			font-size: 25px;
+			}
+		.siu{
+			text-decoration: line-through;
+			color: rgba(0,0,255,1);
+			font-size: 30px;
+			}
+		.sniu{
+			text-decoration: line-through;	
+			color: rgba(0,0,0,1);
+			font-size: 20px;
+			}
+	</style>
+
+<% end %>
+
+
